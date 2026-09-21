@@ -15,7 +15,13 @@ import os
 from pathlib import Path
 
 from langchain_chroma import Chroma
-from langchain_community.document_loaders import CSVLoader, DirectoryLoader, TextLoader, UnstructuredMarkdownLoader
+from langchain_community.document_loaders import (
+    CSVLoader,
+    DirectoryLoader,
+    PyPDFDirectoryLoader,
+    TextLoader,
+    UnstructuredMarkdownLoader,
+)
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -56,12 +62,25 @@ def get_course_data_directory() -> Path:
     return project_root / "02_LangChain" / "07_RAG" / "rag_data"
 
 
+def load_pdf_documents(pdf_dir: Path):
+    """Load PDF files from a directory using LangChain's built-in PDF loader.
+
+    This integrates cleanly into the same document-loading workflow used by the
+    course RAG examples, while extending the corpus to include PDFs in addition
+    to the existing .txt, .md, and .csv sources.
+    """
+    if not pdf_dir.exists():
+        return []
+
+    return PyPDFDirectoryLoader(str(pdf_dir)).load()
+
+
 def load_course_documents() -> list:
     """Load a small set of local course documents for the baseline index.
 
-    This mirrors the indexing logic from the course examples, but keeps the
-    first version intentionally simple by using the bundled local .txt and .md
-    files in the course RAG data folder.
+    This mirrors the indexing logic from the course examples and now includes PDF
+    documents in addition to the existing text-based sources already supported by
+    the homework app.
     """
     data_dir = get_course_data_directory()
     docs = []
@@ -79,6 +98,9 @@ def load_course_documents() -> list:
     csv_dir = data_dir / "csv"
     if csv_dir.exists():
         docs.extend(DirectoryLoader(str(csv_dir), glob="**/*.csv", loader_cls=CSVLoader).load())
+
+    pdf_dir = data_dir / "pdf"
+    docs.extend(load_pdf_documents(pdf_dir))
 
     return docs
 
