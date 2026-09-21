@@ -1,12 +1,12 @@
-"""Baseline LangChain RAG application for Homework 2.
+"""Homework 2 LangChain RAG application with PDF support.
 
-This file is intentionally simple and follows the core architecture from the
-course examples in 02_LangChain/07_RAG:
+This file follows the core architecture used in the course examples in
+02_LangChain/07_RAG, especially:
 - 09_rag_query.py for the retrieval + prompt + LLM chain
 - 07_rag_loaddb.py for the vector store setup and document indexing flow
 
-It keeps the app focused on the standard RAG pattern without adding any custom
-Homework 2 feature yet.
+The implementation stays intentionally simple, while preserving the PDF support
+added for Homework 2 and keeping configuration in environment variables.
 """
 
 from __future__ import annotations
@@ -51,13 +51,25 @@ def get_model_name() -> str:
 
 
 def get_persist_directory() -> Path:
-    """Return the directory used for the persistent Chroma vector database."""
-    project_root = Path(__file__).resolve().parent.parent
-    return project_root / "02_LangChain" / "07_RAG" / "rag_data" / ".chromadb"
+    """Return the persistent Chroma database directory for this homework app.
+
+    The app prefers a local hw2 database so it can be tested entirely inside the
+    homework folder without altering the course examples.
+    """
+    return Path(__file__).resolve().parent / ".chromadb"
 
 
 def get_course_data_directory() -> Path:
-    """Return the course rag_data folder used as the source corpus."""
+    """Return the local corpus directory used for indexing.
+
+    The homework app stores a minimal test corpus inside hw2. If that folder is
+    missing, the app falls back to the course RAG data directory for compatibility.
+    """
+    hw2_dir = Path(__file__).resolve().parent
+    local_data_dir = hw2_dir / "test_data"
+    if local_data_dir.exists():
+        return local_data_dir
+
     project_root = Path(__file__).resolve().parent.parent
     return project_root / "02_LangChain" / "07_RAG" / "rag_data"
 
@@ -76,11 +88,11 @@ def load_pdf_documents(pdf_dir: Path):
 
 
 def load_course_documents() -> list:
-    """Load a small set of local course documents for the baseline index.
+    """Load local documents for the homework app's indexing workflow.
 
-    This mirrors the indexing logic from the course examples and now includes PDF
-    documents in addition to the existing text-based sources already supported by
-    the homework app.
+    This follows the same document-loader pattern used in the course examples,
+    while allowing the homework app to read from a minimal in-project corpus in
+    hw2. The PDF loader is included to exercise the Task 3 functionality.
     """
     data_dir = get_course_data_directory()
     docs = []
