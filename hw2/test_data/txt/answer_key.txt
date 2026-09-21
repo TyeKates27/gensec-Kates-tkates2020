@@ -1,0 +1,7 @@
+Homework 2 test document.
+
+The project is called Generative Security.
+The course uses Google Cloud and Vertex AI for embeddings.
+The recommended model for this course is gemini-3.6-flash.
+The project ID for this course is gensec-kates-tkates2020.
+The team mascot is a robot named Atlas.
