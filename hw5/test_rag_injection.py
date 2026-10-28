@@ -37,7 +37,7 @@ if existing_ids:
 
 vectorstore.add_documents([document])
 
-question = "On what date was Atlas manufactured?"
+question = "What is the mascot of the Generative Security course?"
 
 print("QUESTION:", question)
 print("\nRETRIEVED CONTEXT:")
