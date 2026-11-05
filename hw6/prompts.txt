@@ -1,0 +1,81 @@
+================================================================================
+PROMPTS USED TO GENERATE THE SECURE GUESTBOOK APPLICATION
+COT 4930 - Security Engineering with Generative AI - Homework 06
+Coding agent used: GitHub Copilot (Chat / agent mode)
+================================================================================
+
+These prompts are listed in the order they were issued to the coding agent.
+Replaying them in sequence reproduces the application in app.py. Each prompt
+builds on the previous one. The security-focused prompts (4-8) exist to make
+the agent address adversarial input rather than producing a naive app.
+
+--------------------------------------------------------------------------------
+PROMPT 1 -- Scaffold the application
+--------------------------------------------------------------------------------
+Create a minimal Python Flask web application called "Secure Guestbook" in a
+single file app.py. It should let visitors read a list of guestbook entries on
+the home page and, once signed in, post a short text message. Store entries in
+a local SQLite database with columns: id, author, message, created_at. Render
+everything with render_template_string for now. Keep it to one file.
+
+--------------------------------------------------------------------------------
+PROMPT 2 -- Add OAuth login instead of passwords
+--------------------------------------------------------------------------------
+Add authentication using GitHub OAuth 2.0 via the Authlib library so the app
+never handles passwords directly. Register a "github" provider, add /login,
+/auth (callback), and /logout routes. After login, store only the GitHub
+username in the session. Read GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET from
+environment variables, never hard-code them. Only signed-in users may post.
+
+--------------------------------------------------------------------------------
+PROMPT 3 -- Add the post route and entry list
+--------------------------------------------------------------------------------
+Add a POST /post route that inserts a new entry authored by the logged-in user,
+then redirects back to the home page. Show the 50 most recent entries newest
+first. Require login for posting.
+
+--------------------------------------------------------------------------------
+PROMPT 4 -- Defend against SQL injection
+--------------------------------------------------------------------------------
+Review every database call. Make sure no user input is ever concatenated or
+formatted into a SQL string. Use only parameterized queries with ? placeholders
+for all INSERT and SELECT statements so that a message like
+  Robert'); DROP TABLE entries;--
+is stored as literal text and cannot alter the query.
+
+--------------------------------------------------------------------------------
+PROMPT 5 -- Defend against stored cross-site scripting (XSS)
+--------------------------------------------------------------------------------
+Make the app safe against stored XSS. Confirm Jinja2 autoescaping is on so
+{{ message }} is HTML-escaped on render, and also escape the message and author
+with html.escape() before writing them to the database (defense in depth). Add
+a Content-Security-Policy response header of "default-src 'self'" plus
+X-Content-Type-Options: nosniff, X-Frame-Options: DENY, and Referrer-Policy:
+no-referrer on every response. Verify that a submitted message of
+  <script>alert(document.cookie)</script>
+is displayed as inert text and never executes.
+
+--------------------------------------------------------------------------------
+PROMPT 6 -- Add CSRF protection
+--------------------------------------------------------------------------------
+Protect every state-changing form from cross-site request forgery. Generate a
+random per-session CSRF token, embed it as a hidden field in the post form, and
+reject any POST whose token is missing or does not match, using a constant-time
+comparison. Also set the session cookie flags HttpOnly, SameSite=Lax, and
+Secure (the Secure flag toggled by an env var so it works over http in dev).
+
+--------------------------------------------------------------------------------
+PROMPT 7 -- Add input validation and rate limiting
+--------------------------------------------------------------------------------
+Reject empty messages and messages longer than 280 characters. Add simple rate
+limiting so one session cannot post more than once every 15 seconds, returning
+HTTP 429 if it tries. This limits spam and flooding from automated input.
+
+--------------------------------------------------------------------------------
+PROMPT 8 -- Harden configuration and error handling
+--------------------------------------------------------------------------------
+Make sure the Flask secret key comes from FLASK_SECRET_KEY (falling back to a
+random key), run with debug=False so stack traces are never leaked to users,
+bind to 127.0.0.1, and add clarifying comments above each security control
+explaining which attack it defends against. Produce a requirements.txt pinning
+Flask, Authlib, and requests.
